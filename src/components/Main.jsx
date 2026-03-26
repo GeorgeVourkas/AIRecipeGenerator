@@ -2,10 +2,12 @@ import React from "react"
 import IngredientsList from "../components/IngredientsList"
 import ClaudeRecipe from "../components/ClaudeRecipe"
 import { getRecipeFromChefClaude, getRecipeFromMistral } from "../ai"
+import Loading from "./Loading"
 
 export default function Main() {
     const [ingredients, setIngredients] = React.useState([])
     const [recipe, setRecipe] = React.useState("")
+    const [loading, setLoading] = React.useState(false)
     const recipeSection = React.useRef(null)
 
     React.useEffect(()=>{
@@ -14,13 +16,17 @@ export default function Main() {
         }
     },[recipe])
     async function getRecipe() {
+        setLoading(true)
         const recipeMarkdown = await getRecipeFromChefClaude(ingredients)
         setRecipe(recipeMarkdown)
+        setLoading(false)
     }
 
     function addIngredient(formData) {
         const newIngredient = formData.get("ingredient")
-        setIngredients(prevIngredients => [...prevIngredients, newIngredient])
+        if(newIngredient !=""){
+            setIngredients(prevIngredients => [...prevIngredients, newIngredient])
+        }
     }
 
     
@@ -44,7 +50,7 @@ export default function Main() {
                     ref = {recipeSection}
                 />
             }
-
+            {loading && <Loading />}
             {recipe && <ClaudeRecipe recipe={recipe} />}
         </main>
     )
