@@ -1,6 +1,6 @@
 import { use, useState ,useEffect} from "react"
 
-export default function Loading(){
+export default function Loading(props){
     const [dots, setDots] = useState("")
 
     useEffect(() => {
@@ -15,7 +15,7 @@ export default function Loading(){
         <section className="Loading">
             <div className="wrapper">
                 <h1>Loading <span className="dots">{dots}</span></h1>
-                <p>Please wait, the Chef is prepering your order</p>
+                <p>{props.message}</p>
             </div>
         </section>
     )
