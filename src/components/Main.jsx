@@ -60,28 +60,12 @@ export default function Main() {
     setIngredients([]);
   }
 
-  function changeDeletionStatus() {}
   if (showHistory) {
     return (
       <main className="recipes-history-main">
-        {toast && (
-          <div
-            style={{
-              position: "fixed",
-              top: "20px",
-              right: "20px",
-              background: "#534AB7",
-              color: "#fff",
-              padding: "12px 20px",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-              zIndex: 1000,
-            }}
-          >
-            {toast}
-          </div>
-        )}
+        {toast && 
+          <div className="notification">{toast}</div>
+        }
         <nav className="navigation">
           <button
             onClick={() => setShowHistory(false)}
