@@ -3,8 +3,8 @@ import chefClaudeLogo from "../assets/chef_icon.png"
 export default function Header() {
     return (
         <header>
-            <h1>👨🏼‍🍳</h1>
-            <h1>Chef Claude</h1>
+            <img src={chefClaudeLogo}></img>
+            <h1>Chef UoM</h1>
         </header>
     )
 }

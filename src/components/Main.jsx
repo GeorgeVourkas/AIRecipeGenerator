@@ -5,12 +5,21 @@ import { getRecipeFromChefClaude } from "../ai";
 import Loading from "./Loading";
 import ReactMarkdown from "react-markdown";
 import ConfirmDeletion from "./confirmDeletion";
+import Fuse from "fuse.js";
+
+const fuseOptions = {
+  keys: ["content"],
+  threshold: 0.3,
+  ignoreLocation: true,
+  minMatchCharLength: 2,
+};
+
 export default function Main() {
   const [ingredients, setIngredients] = React.useState([
-    "Oregano",
-    "pizza dough",
+    "oregano",
+    "cheese",
     "tomato",
-    "salad",
+    "pizza dough",
   ]);
   const [recipe, setRecipe] = React.useState("");
   const [loading, setLoading] = React.useState(false);
@@ -19,11 +28,14 @@ export default function Main() {
   const [deletionProccess, setDeletionProccess] = React.useState(false);
   const recipeSection = React.useRef(null);
   const [toast, setToast] = React.useState("");
+  const [selectedRecipeId, setSelectedRecipeId] = React.useState(null);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   //Messages
-  const recipeLoadingMessage = "Please wait.Chef is preparing your recipe!";
+  const recipeLoadingMessage = "Please wait. Chef is writing you a recipe!";
   const deletionTitleMessage = "Recipe Deletion";
   const deletionDetailsMessage = "Are you sure you want to delete this recipe?";
+
   React.useEffect(() => {
     fetch("http://localhost:8080/api/recipes/history")
       .then((res) => res.json())
@@ -36,8 +48,9 @@ export default function Main() {
     });
     setHistory((prev) => prev.filter((r) => r.id !== id));
     setToast("Recipe deleted!");
-    setTimeout(() => setToast(""), 3000); // hides after 3 seconds
+    setTimeout(() => setToast(""), 3000);
   }
+
   async function getRecipe() {
     setLoading(true);
     const recipeMarkdown = await getRecipeFromChefClaude(ingredients);
@@ -61,41 +74,62 @@ export default function Main() {
   }
 
   if (showHistory) {
+    const fuse = new Fuse(history, fuseOptions);
+    const displayedRecipes = searchQuery
+      ? fuse.search(searchQuery).map((result) => result.item)
+      : history;
+
     return (
       <main className="recipes-history-main">
-        {toast && 
-          <div className="notification">{toast}</div>
-        }
+        {toast && <div className="notification">{toast}</div>}
         <nav className="navigation">
           <button
             onClick={() => setShowHistory(false)}
             className="navigation-btn"
           >
-            ← Back to recipes
+            &#8592;
           </button>
         </nav>
+        <div className="historySearchHeader">
+          <h2>Recipe History</h2>{" "}
+          <div className="custom-search-bar">
+            <input
+              type="text"
+              placeholder="Search recipes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery!='' && <button onClick={()=>{setSearchQuery('')}} className="search-clear-button">&#x2715;</button>}
+          </div>
+        </div>
 
-        <h2>Recipe History</h2>
         {history.length === 0 && <p>No recipes saved yet!</p>}
+
+        {deletionProccess && (
+          <ConfirmDeletion
+            title={deletionTitleMessage}
+            message={deletionDetailsMessage}
+            recipeId={selectedRecipeId}
+            onDelete={deleteRecipe}
+            onCancel={() => setDeletionProccess(false)}
+          />
+        )}
+
         <div className="recipes-container">
-          {history.map((r) => (
+          {displayedRecipes.map((r) => (
             <div key={r.id} className="recipe-wrapper">
-              {deletionProccess && (
-                <ConfirmDeletion
-                  title={deletionTitleMessage}
-                  message={deletionDetailsMessage}
-                  recipeId={r.id}
-                  onDelete={deleteRecipe}
-                  onCancel={() => setDeletionProccess(false)}
-                />
-              )}
               <p style={{ fontSize: "12px", color: "gray" }}>
                 {new Date(r.createdAt).toLocaleString()}
               </p>
               <ReactMarkdown>{r.content}</ReactMarkdown>
-              {console.log(r)}
               <div className="wrapper-footer">
-                <button onClick={() => setDeletionProccess(true)}>
+                <button
+                  className="recipe-history-delete-btn"
+                  onClick={() => {
+                    setSelectedRecipeId(r.id);
+                    setDeletionProccess(true);
+                  }}
+                >
                   Delete
                 </button>
               </div>
@@ -110,7 +144,7 @@ export default function Main() {
     <main>
       <nav className="navigation">
         <button onClick={() => setShowHistory(true)} className="navigation-btn">
-          Recipe History
+          📚 Recipe Library
         </button>
       </nav>
       <form action={addIngredient} className="add-ingredient-form">
@@ -120,6 +154,7 @@ export default function Main() {
           aria-label="Add ingredient"
           name="ingredient"
         />
+
         <button>Add ingredient</button>
       </form>
 
@@ -132,8 +167,8 @@ export default function Main() {
       )}
       <nav className="navigation">
         {recipe && (
-          <button className="navigation-btn" onClick={resetForm}>
-            Reset Recipe{" "}
+          <button className="reset-btn" onClick={resetForm}>
+            ↺ Reset Recipe
           </button>
         )}
       </nav>

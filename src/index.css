@@ -1,4 +1,4 @@
-@import url('https://fonts.cdnfonts.com/css/handwriting');
+@import url("https://fonts.cdnfonts.com/css/handwriting");
 * {
   box-sizing: border-box;
 }
@@ -43,7 +43,7 @@ main {
   gap: 12px;
   height: 38px;
 }
-.navigation{
+.navigation {
   width: 95vw;
   height: 5vh;
   display: flex;
@@ -119,9 +119,17 @@ ul.ingredients-list > li {
   font-size: 0.875rem;
   cursor: pointer;
 }
-
+button:hover {
+  background-color: transparent;
+  border: 2px solid #6366f1;
+  transition: 0.3s ease-in-out;
+}
 .suggested-recipe-container {
   color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
   line-height: 28px;
   font-size: 1.125rem;
   font-weight: 400;
@@ -133,11 +141,7 @@ ul.ingredients-list > li {
   margin-bottom: 8px;
 }
 
-button:hover {
-  scale: 1.05;
-  transition: 0.3s ease-in-out;
-}
-.notification{
+.notification {
   position: fixed;
   top: 20px;
   right: 20px;
@@ -146,7 +150,7 @@ button:hover {
   color: black;
   padding: 12px 20px;
   font-size: 14px;
-  z-index: 1000; 
+  z-index: 1000;
 }
 
 .notification {
@@ -166,8 +170,8 @@ button:hover {
   width: 100vw;
   height: 100vh;
   color: white;
-  background: rgba(0, 0, 0, 0.1); /* Semi-transparent background */
-  backdrop-filter: blur(1px);
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
   position: fixed;
   top: 0;
   left: 0;
@@ -184,10 +188,10 @@ button:hover {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    background-color: #6365f1aa; /* more opaque than 69 */
+    background-color: #6366f1;
     border-radius: 25px;
-    border: 1px solid rgba(255, 255, 255, 0.15); /* crisp edge stops the bleed */
-    text-shadow: none; /* kill any inherited glow */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    text-shadow: none;
   }
   .wrapper h1 {
     border: none;
@@ -226,36 +230,27 @@ button:hover {
 
 .recipes-history-main {
   color: white;
-  .recipes-container{
+  .recipes-container {
     gap: 20px;
     width: 100%;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     flex-wrap: wrap;
-    justify-content:center;
-    align-items: left;
+    justify-content: center;
+    align-items: flex-start;
+  }
 
-  }
-  .recipe-wrapper {
-    font-family: 'Handwriting',sans-serif;
-    max-width: 500px;
-    height: auto;
-    background-color: #F8E6A0;
-    color:black;
-    border-radius: 25px;
-    padding: 16px;
-    margin-bottom: 25px;
-  }
   .wrapper-footer {
     display: flex;
-    justify-content: right;
+    justify-content: flex-end;
     align-items: center;
     padding-right: 15px;
   }
   .wrapper-footer button {
-    border: none;
-    background-color: red;
-    color: white;
+    border: 1px solid red;
+    background-color: transparent;
+    font-family: "Handwriting";
+    color: red;
     cursor: pointer;
     font-size: medium;
     padding: 5px 10px;
@@ -263,8 +258,8 @@ button:hover {
     width: 100px;
   }
   .wrapper-footer button:hover {
-    background-color: white;
-    color: red;
+    background-color: red;
+    color: white;
     transition: 0.3s ease-in-out;
   }
 }
@@ -275,14 +270,26 @@ button:hover {
   border: none;
   background-color: #6366f1;
   color: #fafaf8;
-  width: 150px;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  padding: 5px 0px;
+  padding: 8px 20px;
 }
 
-
+.reset-btn {
+  background-color: transparent;
+  border: 2px solid #6366f1;
+  color: white;
+  margin-top: 20px;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-radius: 15px;
+  transition: 0.3s ease-in-out;
+}
+.reset-btn:hover {
+  border-radius: 10px;
+  background-color: #6366f1;
+}
 /* animations */
 @keyframes slideInFromRight {
   from {
@@ -293,4 +300,98 @@ button:hover {
     transform: translateX(0);
     opacity: 1;
   }
+}
+.recipe-wrapper {
+  font-family: "Handwriting", sans-serif;
+  max-width: 450px;
+  height: auto;
+  background-color: #f8e6a0;
+  color: black;
+  border-radius: 2px;
+  padding: 16px 16px 16px 40px;
+  margin-bottom: 25px;
+  box-shadow:
+    10px 10px 0px rgba(0, 0, 0, 0.25),
+    2px 2px 8px rgba(0, 0, 0, 0.15);
+  border-left: 3px solid #e8a0a0;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 27px,
+    #c9b97a 28px
+  );
+  transform: rotate(-0.8deg);
+}
+.recipe-wrapper:hover{
+  scale: 1.02;
+  transition: 0.3s ease-in-out;
+  border: 3px solid #6365f16c;
+  
+}
+
+.main-recipe {
+  max-width: 700px;
+}
+
+.historySearchHeader {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  /* gap: 30px; */
+  margin-bottom: 25px;
+}
+
+.historySearchHeader input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: rgb(58, 58, 58);
+  margin-left: 6.5px;
+  width: 100%;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.custom-search-bar {
+  display: flex;
+  align-items: center;
+  border-radius: 50px;
+  padding: 5px 15px;
+  width: 268px;
+  height: 32px;
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 3px 4px 6px rgba(40, 40, 40, 0.6),
+    inset 0 -0.8px 0 rgba(124, 124, 124, 0.707);
+}
+
+.search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color:black;
+  margin-left: 6.5px;
+  width: 100%;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.search-input::placeholder {
+
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+
+.search-clear-button{
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  opacity: 0.5;
+
+}
+
+.search-clear-button:hover{
+  border: none;
+  scale: 1.2;
 }
