@@ -4,7 +4,7 @@ import ClaudeRecipe from "../components/ClaudeRecipe";
 import { getRecipeFromChefClaude } from "../ai";
 import Loading from "./Loading";
 import ReactMarkdown from "react-markdown";
-import ConfirmDeletion from "./confirmDeletion";
+import ConfirmDeletion from "./ConfirmDeletion";
 import Fuse from "fuse.js";
 
 const fuseOptions = {
@@ -15,12 +15,7 @@ const fuseOptions = {
 };
 
 export default function Main() {
-  const [ingredients, setIngredients] = React.useState([
-    "oregano",
-    "cheese",
-    "tomato",
-    "pizza dough",
-  ]);
+  const [ingredients, setIngredients] = React.useState([]);
   const [recipe, setRecipe] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [history, setHistory] = React.useState([]);

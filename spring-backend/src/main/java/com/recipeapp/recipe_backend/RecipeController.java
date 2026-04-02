@@ -21,7 +21,6 @@ public class RecipeController {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // generate recipe via AI + auto save to DB
     @PostMapping("/generate")
     public Recipe generate(@RequestBody Map<String, String> body) {
         String ingredients = body.get("ingredients");
