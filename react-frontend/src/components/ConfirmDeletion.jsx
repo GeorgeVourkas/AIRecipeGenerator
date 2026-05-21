@@ -11,8 +11,8 @@ export default function ConfirmDeletion(props) {
     }, []);
 
     function handleDelete() {
-        props.onDelete(props.recipeId); // run deletion
-        props.onCancel();               // close the modal
+        props.onDelete(props.recipeId); 
+        props.onCancel();               
     }
 
     return (

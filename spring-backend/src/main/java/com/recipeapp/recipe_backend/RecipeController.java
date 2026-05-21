@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
 import java.util.List;
 import java.util.Map;
 
@@ -16,23 +18,36 @@ public class RecipeController {
     @Autowired
     private RecipeRepository recipeRepository;
 
-    @Value("${ANTHROPIC_API_KEY}")
+    @Value("${anthropic.api.key}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    private static final String ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+    private static final String MODEL = "claude-haiku-4-5-20251001";
+
+    // ── Generate ──────────────────────────────────────────────────────────────
+
     @PostMapping("/generate")
-    public Recipe generate(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> generate(@RequestBody Map<String, String> body) {
+
         String ingredients = body.get("ingredients");
 
-        // call Claude AI
+        if (ingredients == null || ingredients.isBlank()) {
+            return ResponseEntity
+                .badRequest()
+                .body(Map.of("error", "ingredients field is required"));
+        }
+
+        // Build headers
         HttpHeaders headers = new HttpHeaders();
         headers.set("x-api-key", apiKey);
         headers.set("anthropic-version", "2023-06-01");
         headers.setContentType(MediaType.APPLICATION_JSON);
 
+        // Build request body
         Map<String, Object> aiRequest = Map.of(
-            "model", "claude-3-haiku-20240307",
+            "model", MODEL,
             "max_tokens", 1024,
             "system", "You are an assistant that receives a list of ingredients and suggests a recipe. Format your response in markdown.",
             "messages", List.of(Map.of(
@@ -41,33 +56,63 @@ public class RecipeController {
             ))
         );
 
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(aiRequest, headers);
+        // Call Claude
+        ResponseEntity<Map> aiResponse;
+        try {
+            aiResponse = restTemplate.postForEntity(
+                ANTHROPIC_URL,
+                new HttpEntity<>(aiRequest, headers),
+                Map.class
+            );
+        } catch (HttpClientErrorException e) {
+            System.err.println("Anthropic API error: " + e.getResponseBodyAsString());
+            return ResponseEntity
+                .status(e.getStatusCode())
+                .body(Map.of("error", "AI service error: " + e.getResponseBodyAsString()));
+        } catch (Exception e) {
+            System.err.println("Unexpected error calling Anthropic: " + e.getMessage());
+            return ResponseEntity
+                .internalServerError()
+                .body(Map.of("error", "Unexpected error: " + e.getMessage()));
+        }
 
-        ResponseEntity<Map> aiResponse = restTemplate.postForEntity(
-            "https://api.anthropic.com/v1/messages",
-            request,
-            Map.class
-        );
+        // Extract text
+        try {
+            List<Map<String, Object>> content =
+                (List<Map<String, Object>>) aiResponse.getBody().get("content");
+            String recipeText = (String) content.get(0).get("text");
 
-        // extract text from response
-        List<Map<String, Object>> content = (List<Map<String, Object>>) aiResponse.getBody().get("content");
-        String recipeText = (String) content.get(0).get("text");
+            Recipe recipe = new Recipe();
+            recipe.setContent(recipeText);
+            Recipe saved = recipeRepository.save(recipe);
 
-        // save to PostgreSQL
-        Recipe recipe = new Recipe();
-        recipe.setContent(recipeText);
-        return recipeRepository.save(recipe);
+            return ResponseEntity.ok(saved);
+
+        } catch (Exception e) {
+            System.err.println("Failed to parse AI response: " + e.getMessage());
+            return ResponseEntity
+                .internalServerError()
+                .body(Map.of("error", "Failed to parse AI response"));
+        }
     }
 
-    // get all recipes (history)
+    // ── History ───────────────────────────────────────────────────────────────
+
     @GetMapping("/history")
-    public List<Recipe> history() {
-        return recipeRepository.findAllByOrderByCreatedAtDesc();
+    public ResponseEntity<List<Recipe>> history() {
+        return ResponseEntity.ok(recipeRepository.findAllByOrderByCreatedAtDesc());
     }
 
-    // delete a recipe
+    // ── Delete ────────────────────────────────────────────────────────────────
+
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        if (!recipeRepository.existsById(id)) {
+            return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Recipe not found with id: " + id));
+        }
         recipeRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
