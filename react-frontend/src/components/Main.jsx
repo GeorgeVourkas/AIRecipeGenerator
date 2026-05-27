@@ -1,11 +1,11 @@
 import React from "react";
 import IngredientsList from "../components/IngredientsList";
 import ClaudeRecipe from "../components/ClaudeRecipe";
-import { getRecipeFromChefClaude } from "../ai";
 import Loading from "./Loading";
 import ReactMarkdown from "react-markdown";
 import ConfirmDeletion from "./ConfirmDeletion";
 import Fuse from "fuse.js";
+import { useAuth } from "./AppShell";
 
 const fuseOptions = {
   keys: ["content"],
@@ -14,32 +14,49 @@ const fuseOptions = {
   minMatchCharLength: 2,
 };
 
-export default function Main() {
+export default function Main({ onNavigate, startOnHistory = false }) {
+  const { user } = useAuth();
+
   const [ingredients, setIngredients] = React.useState([]);
   const [recipe, setRecipe] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [history, setHistory] = React.useState([]);
-  const [showHistory, setShowHistory] = React.useState(false);
+  const [showHistory, setShowHistory] = React.useState(startOnHistory);
   const [deletionProccess, setDeletionProccess] = React.useState(false);
   const recipeSection = React.useRef(null);
   const [toast, setToast] = React.useState("");
   const [selectedRecipeId, setSelectedRecipeId] = React.useState(null);
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  //Messages
+  // Messages
   const recipeLoadingMessage = "Please wait. Chef is writing you a recipe!";
   const deletionTitleMessage = "Recipe Deletion";
   const deletionDetailsMessage = "Are you sure you want to delete this recipe?";
 
-  React.useEffect(() => {
-    fetch("http://localhost:8080/api/recipes/history")
+  // Auth headers helper
+  function authHeaders(extra = {}) {
+    return {
+      "Authorization": `Bearer ${user?.token}`,
+      ...extra,
+    };
+  }
+
+  function fetchHistory() {
+    fetch("http://localhost:8080/api/recipes/history", {
+      headers: authHeaders(),
+    })
       .then((res) => res.json())
       .then((data) => setHistory(data));
+  }
+
+  React.useEffect(() => {
+    fetchHistory();
   }, []);
 
   async function deleteRecipe(id) {
     await fetch(`http://localhost:8080/api/recipes/${id}`, {
       method: "DELETE",
+      headers: authHeaders(),
     });
     setHistory((prev) => prev.filter((r) => r.id !== id));
     setToast("Recipe deleted!");
@@ -48,18 +65,26 @@ export default function Main() {
 
   async function getRecipe() {
     setLoading(true);
-    const recipeMarkdown = await getRecipeFromChefClaude(ingredients);
-    setRecipe(recipeMarkdown);
-    fetch("http://localhost:8080/api/recipes/history")
-      .then((res) => res.json())
-      .then((data) => setHistory(data));
-    setLoading(false);
+    try {
+      const res = await fetch("http://localhost:8080/api/recipes/generate", {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ ingredients: ingredients.join(", ") }),
+      });
+      const data = await res.json();
+      setRecipe(data.content);
+      fetchHistory();
+    } catch (err) {
+      console.error("Failed to generate recipe:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function addIngredient(formData) {
     const newIngredient = formData.get("ingredient");
-    if (newIngredient != "") {
-      setIngredients((prevIngredients) => [...prevIngredients, newIngredient]);
+    if (newIngredient !== "") {
+      setIngredients((prev) => [...prev, newIngredient]);
     }
   }
 
@@ -68,6 +93,7 @@ export default function Main() {
     setIngredients([]);
   }
 
+  // ── History View ─────────────────────────────────────────────────────────────
   if (showHistory) {
     const fuse = new Fuse(history, fuseOptions);
     const displayedRecipes = searchQuery
@@ -77,6 +103,7 @@ export default function Main() {
     return (
       <main className="recipes-history-main">
         {toast && <div className="notification">{toast}</div>}
+
         <nav className="navigation">
           <button
             onClick={() => setShowHistory(false)}
@@ -85,8 +112,9 @@ export default function Main() {
             &#8592;
           </button>
         </nav>
+
         <div className="historySearchHeader">
-          <h2>Recipe History</h2>{" "}
+          <h2>Recipe History</h2>
           <div className="custom-search-bar">
             <input
               type="text"
@@ -94,7 +122,14 @@ export default function Main() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            {searchQuery!='' && <button onClick={()=>{setSearchQuery('')}} className="search-clear-button">&#x2715;</button>}
+            {searchQuery !== "" && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="search-clear-button"
+              >
+                &#x2715;
+              </button>
+            )}
           </div>
         </div>
 
@@ -135,13 +170,18 @@ export default function Main() {
     );
   }
 
+  // ── Main View ─────────────────────────────────────────────────────────────────
   return (
     <main>
       <nav className="navigation">
-        <button onClick={() => setShowHistory(true)} className="navigation-btn">
+        <button
+          onClick={() => setShowHistory(true)}
+          className="navigation-btn"
+        >
           📚 Recipe Library
         </button>
       </nav>
+
       <form action={addIngredient} className="add-ingredient-form">
         <input
           type="text"
@@ -149,7 +189,6 @@ export default function Main() {
           aria-label="Add ingredient"
           name="ingredient"
         />
-
         <button>Add ingredient</button>
       </form>
 
@@ -160,6 +199,7 @@ export default function Main() {
           ref={recipeSection}
         />
       )}
+
       <nav className="navigation">
         {recipe && (
           <button className="reset-btn" onClick={resetForm}>
@@ -167,6 +207,7 @@ export default function Main() {
           </button>
         )}
       </nav>
+
       {loading && <Loading message={recipeLoadingMessage} />}
       {recipe && <ClaudeRecipe recipe={recipe} />}
     </main>

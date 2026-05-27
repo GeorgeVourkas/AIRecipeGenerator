@@ -122,7 +122,6 @@ ul.ingredients-list > li {
 }
 button:hover {
   background-color: transparent;
-  border: 2px solid #6366f1;
   transition: 0.3s ease-in-out;
 }
 .suggested-recipe-container {

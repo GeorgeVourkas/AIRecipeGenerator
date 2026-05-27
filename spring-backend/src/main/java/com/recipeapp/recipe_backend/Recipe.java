@@ -16,10 +16,18 @@ public class Recipe {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    // The relationship hook: Many recipes can belong to one user
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true) // Nullable means anonymous works fine!
+    private User user;
+
     public Long getId() { return id; }
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }
